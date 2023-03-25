@@ -38,14 +38,14 @@ public class MatrixLogHandler: LogHandler {
 
     public var metadata = Logger.Metadata()
 
-    /// <#Description#>
+    /// Create a new matrix log handler.
     /// - Parameters:
-    ///   - label: <#label description#>
-    ///   - homeserver: <#homeserver description#>
-    ///   - roomID: <#roomID description#>
-    ///   - accessToken: <#accessToken description#>
-    ///   - level: <#level description#>
-    ///   - showLocation: <#showLocation description#>
+    ///   - label: Your log label.
+    ///   - homeserver: Your Matrix homeserver, e.g. `https://matrix.org`.
+    ///   - roomID: Your room ID (looks like `!xxxxxxxxxxxxxxx:homeserver.tld`).
+    ///   - accessToken: Your access token.
+    ///   - level: Log level, defaults to `.critical`.
+    ///   - showLocation: Should the logs show the source location (function, file and line number), defaults to `false`.
     public init(
         label: String,
         homeserver: URL,
