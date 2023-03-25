@@ -45,6 +45,11 @@ The room ID can be found in the room settings of most clients, the access token 
 
 The log level defaults to only send `critical` logs to Matrix, feel free to set that to whatever works best for your use-case, but it's recommended to not send too many logs to your homeserver, especially if you're not running it yourself.
 
-This is what messages look like:
+Now you can just log messages as usual!
+
+```swift
+logger.debug("Some debug message")
+logger.error("Oh no, an error occurred!", metadata: ["important context": "some value here"])
+```
 
 ![screenshot](https://user-images.githubusercontent.com/2625584/227747613-b1a08d79-71d8-4338-b020-f2f6de87ec4d.png)
