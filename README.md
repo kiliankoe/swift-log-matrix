@@ -1,4 +1,7 @@
-# LoggingMatrix 
+# LoggingMatrix
+
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fkiliankoe%2Fswift-log-matrix%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/kiliankoe/swift-log-matrix)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fkiliankoe%2Fswift-log-matrix%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/kiliankoe/swift-log-matrix)
 
 This is a logging backend for [SwiftLog](https://github.com/apple/swift-log) that sends messages to a [Matrix](https://matrix.org) channel of your choice.
 
