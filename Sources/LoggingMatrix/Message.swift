@@ -63,7 +63,7 @@ extension MatrixLogHandler {
         private var plainBody: String {
             var body = """
                 \(timestamp)
-                \(levelIcon) [\(label)] [\(level)]
+                \(levelIcon) [\(level)] [\(label)]
                 \(message)
                 """
             if showLocation {
@@ -78,16 +78,16 @@ extension MatrixLogHandler {
         private var formattedBody: String {
             var body = """
                 \(timestamp)</br>
-                \(levelIcon) <b>[\(label)] [\(level)]</b></br>
-                <b>\(message)</b>
+                \(levelIcon) <b>[\(level)] [\(label)]</b></br>
+                \(message)
                 """
-            if showLocation {
-                body.append("</br><em>\(function) @ \(file):\(line)</em>")
-            }
             if !metadata.isEmpty {
                 body.append("<ul>")
                 body.append("\(metadata.map { "<li>\($0): \($1)</li>"}.joined())")
                 body.append("</ul>")
+            }
+            if showLocation {
+                body.append("</br><em>\(function) @ \(file):\(line)</em>")
             }
             return body
         }

@@ -6,7 +6,6 @@ import Logging
 #endif
 
 public class MatrixLogHandler: LogHandler {
-
     private var homeserver: URL
     private var roomID: String
     private var accessToken: String
@@ -14,25 +13,26 @@ public class MatrixLogHandler: LogHandler {
     private var label: String
     public var logLevel: Logger.Level
     private var showLocation: Bool
+    private var dateFormatter: DateFormatter
+
+    public static var defaultDateFormatter: DateFormatter = {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "E, d MMM yyyy HH:mm:ss Z"
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.timeZone = TimeZone(secondsFromGMT: TimeZone.current.secondsFromGMT())
+        return dateFormatter
+    }()
 
     private var timestamp: String {
-        var buffer = [Int8](repeating: 0, count: 25)
-        var timestamp = time(nil)
-        let localTime = localtime(&timestamp)
-        strftime(&buffer, buffer.count, "%Y-%m-%dT%H:%M:%S%z", localTime)
-        return buffer.withUnsafeBufferPointer {
-            $0.withMemoryRebound(to: CChar.self) {
-                String(cString: $0.baseAddress!)
-            }
-        }
+        self.dateFormatter.string(from: Date())
     }
 
     public subscript(metadataKey metadataKey: String) -> Logger.Metadata.Value? {
         get {
-            metadata[metadataKey]
+            self.metadata[metadataKey]
         }
         set(newValue) {
-            metadata[metadataKey] = newValue
+            self.metadata[metadataKey] = newValue
         }
     }
 
@@ -46,13 +46,15 @@ public class MatrixLogHandler: LogHandler {
     ///   - accessToken: Your access token.
     ///   - level: Log level, defaults to `.critical`.
     ///   - showLocation: Should the logs show the source location (function, file and line number), defaults to `false`.
+    ///   - dateFormatter: A custom`DateFormatter` to use for formatting timestamps in log output.
     public init(
         label: String,
         homeserver: URL,
         roomID: String,
         accessToken: String,
         level: Logger.Level = .critical,
-        showLocation: Bool = false
+        showLocation: Bool = false,
+        dateFormatter: DateFormatter = defaultDateFormatter
     ) {
         self.label = label
         self.homeserver = homeserver
@@ -60,6 +62,7 @@ public class MatrixLogHandler: LogHandler {
         self.accessToken = accessToken
         self.logLevel = level
         self.showLocation = showLocation
+        self.dateFormatter = dateFormatter
     }
 
     public func log(
@@ -70,7 +73,7 @@ public class MatrixLogHandler: LogHandler {
         function: String,
         line: UInt
     ) {
-        guard level >= logLevel else { return }
+        guard level >= self.logLevel else { return }
         let mergedMetadata = self.metadata.merged(with: metadata)
         Task {
             let matrixMessage = Message(
@@ -85,7 +88,7 @@ public class MatrixLogHandler: LogHandler {
                 showLocation: self.showLocation
             )
             do {
-                try await send(matrixMessage)
+                try await self.send(matrixMessage)
             } catch {
                 print("Error trying to send log to Matrix: \(error)")
             }
@@ -108,12 +111,12 @@ public class MatrixLogHandler: LogHandler {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue("application/json", forHTTPHeaderField: "Accept")
 
-        let (data, resp) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
         do {
             _ = try JSONDecoder().decode(EventResponse.self, from: data)
         } catch {
             throw LoggingMatrixError.invalidResponse(
-                statusCode: resp.statusCode,
+                statusCode: response.statusCode,
                 message: String(data: data, encoding: .utf8)
             )
         }
