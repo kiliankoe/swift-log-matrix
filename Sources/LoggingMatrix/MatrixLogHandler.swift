@@ -71,14 +71,14 @@ public class MatrixLogHandler: LogHandler {
         line: UInt
     ) {
         guard level >= logLevel else { return }
-        let metadata = mergedMetadata(metadata)
+        let mergedMetadata = self.metadata.merged(with: metadata)
         Task {
             let matrixMessage = Message(
                 timestamp: self.timestamp,
                 label: self.label,
                 level: level,
                 message: message,
-                metadata: metadata,
+                metadata: mergedMetadata,
                 file: file,
                 function: function,
                 line: line,
@@ -90,13 +90,6 @@ public class MatrixLogHandler: LogHandler {
                 print("Error trying to send log to Matrix: \(error)")
             }
         }
-    }
-
-    private func mergedMetadata(_ metadata: Logger.Metadata?) -> Logger.Metadata {
-        guard let metadata = metadata else {
-            return self.metadata
-        }
-        return self.metadata.merging(metadata, uniquingKeysWith: { _, new in new })
     }
 
     private func send(_ message: Message) async throws {
