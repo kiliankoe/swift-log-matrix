@@ -1,9 +1,7 @@
+import AsyncHTTPClient
 import Foundation
 import Logging
-
-#if canImport(FoundationNetworking)
-    import FoundationNetworking
-#endif
+import NIO
 
 public class MatrixLogHandler: LogHandler {
 
@@ -14,6 +12,8 @@ public class MatrixLogHandler: LogHandler {
     private var label: String
     public var logLevel: Logger.Level
     private var showLocation: Bool
+
+    private var httpClient = HTTPClient(eventLoopGroupProvider: .createNew)
 
     private var timestamp: String {
         var buffer = [Int8](repeating: 0, count: 25)
@@ -62,6 +62,10 @@ public class MatrixLogHandler: LogHandler {
         self.showLocation = showLocation
     }
 
+    deinit {
+        _ = self.httpClient.shutdown()
+    }
+
     public func log(
         level: Logger.Level,
         message: Logger.Message,
@@ -98,31 +102,27 @@ public class MatrixLogHandler: LogHandler {
         let pathComponents = ["/_matrix", "/client", "/r0", "/rooms", "/\(self.roomID)", "/send", "/m.room.message"]
         let sendURL = pathComponents.reduce(self.homeserver, { $0.appendingPathComponent($1) })
         guard var urlComponents = URLComponents(url: sendURL, resolvingAgainstBaseURL: false) else {
-            throw Error.urlComponents
+            throw Error.invalidURL
         }
         urlComponents.queryItems = [URLQueryItem(name: "access_token", value: self.accessToken)]
 
-        guard var request = urlComponents.url.map({ URLRequest(url: $0) }) else { throw Error.urlComponents }
-        request.httpMethod = "POST"
-        request.httpBody = payload
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        guard var request = urlComponents.url.map({ HTTPClientRequest(url: $0.absoluteString) }) else {
+            throw Error.invalidURL
+        }
+        request.method = .POST
+        request.body = .bytes(ByteBuffer(bytes: payload))
+        request.headers.add(name: "Content-Type", value: "application/json")
+        request.headers.add(name: "Accept", value: "application/json")
 
-        let (data, resp) = try await URLSession.shared.data(for: request)
-
-        do {
-            _ = try JSONDecoder().decode(EventResponse.self, from: data)
-        } catch {
-            throw Error.invalidResponse(
-                statusCode: (resp as? HTTPURLResponse)?.statusCode,
-                message: String(data: data, encoding: .utf8)
-            )
+        let response = try await httpClient.execute(request, timeout: .seconds(30))
+        guard response.status == .ok else {
+            throw Error.invalidResponse(statusCode: response.status.code)
         }
     }
 
     private enum Error: Swift.Error {
-        case urlComponents
-        case invalidResponse(statusCode: Int?, message: String?)
+        case invalidURL
+        case invalidResponse(statusCode: UInt)
     }
 
     private struct EventResponse: Decodable {
