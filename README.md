@@ -55,6 +55,6 @@ logger.debug("Some debug message")
 logger.error("Oh no, an error occurred!", metadata: ["important context": "some value here"])
 ```
 
-![screenshot](https://user-images.githubusercontent.com/2625584/227747613-b1a08d79-71d8-4338-b020-f2f6de87ec4d.png)
+![screenshot](https://user-images.githubusercontent.com/2625584/227777131-54fe86ff-73ac-4ee4-932b-24568ade203a.png)
 
 ⚠️ Please be aware that messages are *not* sent using Matrix' end-to-end encryption, they are being sent unencrypted.
